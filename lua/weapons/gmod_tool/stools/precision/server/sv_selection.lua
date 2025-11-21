@@ -1,23 +1,44 @@
--- Recursively get all entities connected via constraints
-function GetAllEnts( Ent, OrderedEntList, EntsTab, ConstsTab )
+local entKeys = {"Ent1", "Ent2", "Ent3", "Ent4", "Ent5", "Ent6"}
+
+local function GetMaxContraptionSize()
+	return GetConVar("precision_max_contraption"):GetInt()
+end
+
+local function GetMaxRecursionDepth()
+	return GetConVar("precision_max_recursion_depth"):GetInt()
+end
+
+function GetAllEnts( Ent, OrderedEntList, EntsTab, ConstsTab, depth )
+	depth = depth or 0
+
+	if depth >= GetMaxRecursionDepth() then return OrderedEntList, true end
+	if #OrderedEntList >= GetMaxContraptionSize() then return OrderedEntList, true end
+
 	if ( Ent and Ent:IsValid() ) and ( !EntsTab[ Ent:EntIndex() ] ) then
 		EntsTab[ Ent:EntIndex() ] = Ent
 		table.insert(OrderedEntList, Ent)
-		if ( !constraint.HasConstraints( Ent ) ) then return OrderedEntList end
+
+		if #OrderedEntList >= GetMaxContraptionSize() then return OrderedEntList, true end
+
+		if ( !constraint.HasConstraints( Ent ) ) then return OrderedEntList, false end
+
 		for key, ConstraintEntity in pairs( Ent.Constraints ) do
 			if ( !ConstsTab[ ConstraintEntity ] ) then
 				ConstsTab[ ConstraintEntity ] = true
 				local ConstTable = ConstraintEntity:GetTable()
-				for i=1, 6 do
-					local e = ConstTable[ "Ent"..i ]
+
+				for i = 1, 6 do
+					local e = ConstTable[ entKeys[i] ]
 					if ( e and e:IsValid() ) and ( !EntsTab[ e:EntIndex() ] ) then
-						GetAllEnts( e, OrderedEntList, EntsTab, ConstsTab )
+						local _, limitHit = GetAllEnts( e, OrderedEntList, EntsTab, ConstsTab, depth + 1 )
+
+						if limitHit then return OrderedEntList, true end
 					end
 				end
 			end
 		end
 	end
-	return OrderedEntList
+	return OrderedEntList, false
 end
 
 -- Get all constraints from a table of entities
@@ -49,7 +70,7 @@ function TOOL:SelectEnts(StartEnt, AllConnected)
 		local NumApp = 0
 		EntsTab = {}
 		ConstsTab = {}
-		GetAllEnts(StartEnt, self.TaggedEnts, EntsTab, ConstsTab)
+		local _, limitHit = GetAllEnts(StartEnt, self.TaggedEnts, EntsTab, ConstsTab)
 		for key,CurrentEnt in pairs(self.TaggedEnts) do
 			if ( CurrentEnt and CurrentEnt:IsValid() ) then
 				local CurrentPhys = CurrentEnt:GetPhysicsObject()
@@ -59,7 +80,11 @@ function TOOL:SelectEnts(StartEnt, AllConnected)
 			end
 			NumApp = NumApp + 1
 		end
-		self:SendMessage( NumApp .. " objects selected." )
+		if limitHit then
+			self:SendMessage( NumApp .. " objects selected (limit reached - partial contraption)" )
+		else
+			self:SendMessage( NumApp .. " objects selected." )
+		end
 	else
 		if ( StartEnt and StartEnt:IsValid() ) then
 			local CurrentPhys = StartEnt:GetPhysicsObject()

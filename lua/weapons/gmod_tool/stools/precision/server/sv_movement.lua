@@ -82,7 +82,7 @@ function TOOL:Nudge( trace, direction )
 		local TargetEnts = {}
 		local EntsTab = {}
 		local ConstsTab = {}
-		GetAllEnts(trace.Entity, TargetEnts, EntsTab, ConstsTab)
+		local _, limitHit = GetAllEnts(trace.Entity, TargetEnts, EntsTab, ConstsTab)
 		for key,CurrentEnt in pairs(TargetEnts) do
 			if ( CurrentEnt and CurrentEnt:IsValid() ) then
 				local CurrentPhys = CurrentEnt:GetPhysicsObject()
@@ -112,12 +112,13 @@ function TOOL:Nudge( trace, direction )
 			end
 			NumApp = NumApp + 1
 		end
+		local limitWarning = limitHit and " (limit reached - partial contraption)" or ""
 		if ( direction == -1 ) then
-			self:SendMessage( NumApp .. " items pushed." )
+			self:SendMessage( NumApp .. " items pushed" .. limitWarning .. "." )
 		elseif ( direction == 1 ) then
-			self:SendMessage( NumApp .. " items pulled." )
+			self:SendMessage( NumApp .. " items pulled" .. limitWarning .. "." )
 		else
-			self:SendMessage( NumApp .. " items nudged." )
+			self:SendMessage( NumApp .. " items nudged" .. limitWarning .. "." )
 		end
 	else
 		if ( self:GetClientNumber( "nudgeundo" ) == 1 ) then

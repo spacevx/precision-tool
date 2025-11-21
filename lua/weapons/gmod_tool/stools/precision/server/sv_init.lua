@@ -1,4 +1,10 @@
 if SERVER then
+	CreateConVar("precision_max_contraption", "300", FCVAR_ARCHIVE + FCVAR_NOTIFY,
+		"Maximum entities per contraption operation (recommended: 150-300 for 128 players)", 1, 5000)
+
+	CreateConVar("precision_max_recursion_depth", "100", FCVAR_ARCHIVE + FCVAR_NOTIFY,
+		"Maximum constraint chain depth (recommended: 50-100)", 1, 500)
+
 	include("precision/sv_selection.lua")
 	include("precision/sv_movement.lua")
 	include("precision/sv_constraints.lua")
