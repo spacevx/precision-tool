@@ -23,7 +23,20 @@ function TOOL:LeftClick( trace )
 		end
 
 	elseif ( stage == 2 ) then
-		self:DoConstraint(mode)
+		if CLIENT then
+			local Ent1 = self:GetEnt(1)
+			if IsValid(Ent1) then
+				net.Start("precision_rotation_finalize")
+				net.WriteAngle(Ent1:GetAngles())
+				net.WriteVector(Ent1:GetPos())
+				net.SendToServer()
+			end
+			return true
+		end
+
+		if SERVER then
+			return false
+		end
 	end
 
 	return true
@@ -73,42 +86,46 @@ function TOOL:Think()
 
 	local mode = self:GetClientNumber( "mode" )
 
-	if ( SERVER && mode == 2 && self:GetStage() == 2 ) then
-		local Phys1 = self:GetPhys(1)
-		local cmd = self:GetOwner():GetCurrentCommand()
+	if ( CLIENT && mode == 2 && self:GetStage() == 2 ) then
+		if not IsValid(Ent1) then return end
 
 		local rotation = self:GetClientNumber( "rotation" )
 		if ( rotation < 0.02 ) then rotation = 0.02 end
-		local degrees = cmd:GetMouseX() * 0.02
+
+		local mouseDelta = input.GetMouseDelta()
+		local degrees = mouseDelta.x * 0.02
 
 		local newdegrees = 0
 		local changedegrees = 0
 		local angle = 0
 
-		if( self:GetOwner():KeyDown( IN_RELOAD ) ) then
+		if input.IsKeyDown(KEY_R) then
 			self.realdegreesY = self.realdegreesY + degrees
-			newdegrees =  self.realdegreesY - ((self.realdegreesY + (rotation/2)) % rotation)
+			newdegrees = self.realdegreesY - ((self.realdegreesY + (rotation/2)) % rotation)
 			changedegrees = self.lastdegreesY - newdegrees
 			self.lastdegreesY = newdegrees
-			angle = Phys1:RotateAroundAxis( self.axisY , changedegrees )
-		elseif( self:GetOwner():KeyDown( IN_ATTACK2 ) ) then
+			angle = Ent1:GetAngles()
+			angle:RotateAroundAxis(self.axisY, changedegrees)
+		elseif input.IsMouseDown(MOUSE_RIGHT) then
 			self.realdegreesZ = self.realdegreesZ + degrees
-			newdegrees =  self.realdegreesZ - ((self.realdegreesZ + (rotation/2)) % rotation)
+			newdegrees = self.realdegreesZ - ((self.realdegreesZ + (rotation/2)) % rotation)
 			changedegrees = self.lastdegreesZ - newdegrees
 			self.lastdegreesZ = newdegrees
-			angle = Phys1:RotateAroundAxis( self.axisZ , changedegrees )
+			angle = Ent1:GetAngles()
+			angle:RotateAroundAxis(self.axisZ, changedegrees)
 		else
 			self.realdegrees = self.realdegrees + degrees
-			newdegrees =  self.realdegrees - ((self.realdegrees + (rotation/2)) % rotation)
+			newdegrees = self.realdegrees - ((self.realdegrees + (rotation/2)) % rotation)
 			changedegrees = self.lastdegrees - newdegrees
 			self.lastdegrees = newdegrees
-			angle = Phys1:RotateAroundAxis( self.axis , changedegrees )
+			angle = Ent1:GetAngles()
+			angle:RotateAroundAxis(self.axis, changedegrees)
 		end
-		Phys1:SetAngles( angle )
 
-		local TargetPos = (Phys1:GetPos() - self:GetPos(1)) + self.OldPos
-		Phys1:SetPos( TargetPos )
-		Phys1:Wake()
+		Ent1:SetAngles(angle)
+
+		local TargetPos = (Ent1:GetPos() - self:GetPos(1)) + self.OldPos
+		Ent1:SetPos(TargetPos)
 	end
 end
 
@@ -117,4 +134,32 @@ function TOOL:Holster()
 	self:ClearObjects()
 	self:SetStage(0)
 	self:ClearSelection()
+end
+
+if SERVER then
+	net.Receive("precision_rotation_finalize", function(len, ply)
+		local finalAngle = net.ReadAngle()
+		local finalPos = net.ReadVector()
+
+		local tool = ply:GetTool("precision")
+		if not tool then return end
+
+		if tool:GetStage() != 2 then return end
+
+		local mode = tool:GetClientNumber("mode")
+		if mode != 2 then return end
+
+		local Ent1 = tool:GetEnt(1)
+		if not IsValid(Ent1) then return end
+
+		local Phys1 = tool:GetPhys(1)
+		if not IsValid(Phys1) then return end
+
+		Phys1:EnableMotion(false)
+		Phys1:SetAngles(finalAngle)
+		Phys1:SetPos(finalPos)
+		Phys1:Wake()
+
+		tool:DoConstraint(mode)
+	end)
 end

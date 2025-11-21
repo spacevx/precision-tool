@@ -5,6 +5,8 @@ if SERVER then
 	CreateConVar("precision_max_recursion_depth", "100", FCVAR_ARCHIVE + FCVAR_NOTIFY,
 		"Maximum constraint chain depth (recommended: 50-100)", 1, 500)
 
+	util.AddNetworkString("precision_rotation_finalize")
+
 	include("precision/sv_selection.lua")
 	include("precision/sv_movement.lua")
 	include("precision/sv_constraints.lua")
