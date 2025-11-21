@@ -77,7 +77,7 @@ function TOOL:DoConstraint(mode)
 
 	local NumApp = 0
 
-	for key,CurrentEnt in pairs(self.TaggedEnts) do
+	for i, CurrentEnt in ipairs(self.TaggedEnts) do
 		if ( CurrentEnt and CurrentEnt:IsValid() ) then
 			local CurrentPhys = CurrentEnt:GetPhysicsObject()
 			if ( CurrentPhys:IsValid() && !CurrentEnt:GetParent():IsValid() ) then

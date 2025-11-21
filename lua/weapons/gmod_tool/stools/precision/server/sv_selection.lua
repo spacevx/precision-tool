@@ -71,7 +71,7 @@ function TOOL:SelectEnts(StartEnt, AllConnected)
 		EntsTab = {}
 		ConstsTab = {}
 		local _, limitHit = GetAllEnts(StartEnt, self.TaggedEnts, EntsTab, ConstsTab)
-		for key,CurrentEnt in pairs(self.TaggedEnts) do
+		for i, CurrentEnt in ipairs(self.TaggedEnts) do
 			if ( CurrentEnt and CurrentEnt:IsValid() ) then
 				local CurrentPhys = CurrentEnt:GetPhysicsObject()
 				if ( CurrentPhys:IsValid() ) then
@@ -101,7 +101,7 @@ end
 function TOOL:ClearSelection()
 	if ( self.TaggedEnts ) then
 		local color
-		for key,CurrentEnt in pairs(self.TaggedEnts) do
+		for i, CurrentEnt in ipairs(self.TaggedEnts) do
 			if ( CurrentEnt and CurrentEnt:IsValid() ) then
 				local CurrentPhys = CurrentEnt:GetPhysicsObject()
 				if ( CurrentPhys:IsValid() ) then

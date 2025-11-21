@@ -83,7 +83,7 @@ function TOOL:Nudge( trace, direction )
 		local EntsTab = {}
 		local ConstsTab = {}
 		local _, limitHit = GetAllEnts(trace.Entity, TargetEnts, EntsTab, ConstsTab)
-		for key,CurrentEnt in pairs(TargetEnts) do
+		for i, CurrentEnt in ipairs(TargetEnts) do
 			if ( CurrentEnt and CurrentEnt:IsValid() ) then
 				local CurrentPhys = CurrentEnt:GetPhysicsObject()
 				if ( CurrentPhys:IsValid() ) then
